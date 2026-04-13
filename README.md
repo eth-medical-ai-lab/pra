@@ -5,6 +5,7 @@
 # Process Reward Agents for Steering Knowledge-Intensive Reasoning
 
 <p align="center">
+  <a href="https://arxiv.org/abs/2604.09482" target="_blank"><img src="https://img.shields.io/badge/arXiv-2604.09482-red"></a>
   <a href="https://process-reward-agents.github.io/" target="_blank"><img src="https://img.shields.io/badge/Project-Page-blue"></a>
   <a href="https://huggingface.co/process-reward-agents" target="_blank"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face%20-Model-orange"></a>
   <a href="https://huggingface.co/process-reward-agents" target="_blank"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face%20-Dataset-orange"></a>
