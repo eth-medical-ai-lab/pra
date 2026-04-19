@@ -19,11 +19,13 @@
 ### Citation
 
 ```bibtex
-@article{sohn2026processrewardagents,
-  title={Process Reward Agents for Steering Knowledge-Intensive Reasoning},
-  author={Jiwoong Sohn and Tomasz Sternal and Kenneth Styppa and Torsten Hoefler and Michael Moor},
-  author+an = {1=first; 2=first; 3=first; 4=last; 5=last},
-  year={2026},
-  url={https://process-reward-agents.github.io/}
+@misc{sohn2026processrewardagentssteering,
+      title={Process Reward Agents for Steering Knowledge-Intensive Reasoning}, 
+      author={Jiwoong Sohn and Tomasz Sternal and Kenneth Styppa and Torsten Hoefler and Michael Moor},
+      year={2026},
+      eprint={2604.09482},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI},
+      url={https://arxiv.org/abs/2604.09482}, 
 }
 ```
