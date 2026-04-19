@@ -14,7 +14,7 @@
 
 ### News
 
-* **[2026]** We release **Process Reward Agents**. Code will be released soon.
+* **[2026]** We release **Process Reward Agents**.
 
 ### Citation
 
