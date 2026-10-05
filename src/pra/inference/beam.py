@@ -91,6 +91,22 @@ def _chunks(seq, size):
 
 
 def main(args):
+    _configure_gpu(args)
+    indexed = _load_data(args)
+    os.makedirs(args.trace_dir, exist_ok=True)
+
+    retriever_sources = _prepare_retriever(args)
+    pi_theta, pi_theta_tokenizer, mu_phi_tokenizer = _load_models(args)
+    config = _build_config(args)
+    traces = (BeamTrace(j, d, pi_theta_tokenizer, config) for j, d in indexed)
+
+    completed = _run_beam_search(
+        traces, pi_theta, mu_phi_tokenizer, config, retriever_sources, args
+    )
+    _save_results(completed, args)
+
+
+def _configure_gpu(args) -> None:
     if os.environ.get("CUDA_VISIBLE_DEVICES"):
         vis = os.environ["CUDA_VISIBLE_DEVICES"]
         if args.visible_gpus and args.visible_gpus != vis:
@@ -101,6 +117,9 @@ def main(args):
     else:
         os.environ["CUDA_VISIBLE_DEVICES"] = args.visible_gpus
 
+
+def _load_data(args) -> list[tuple[int, dict]]:
+    """Load and shard examples, preserving their original indices."""
     with open(args.input_jsonl_path) as f:
         all_data = [json.loads(line) for line in f]
     if args.sample_size is not None:
@@ -118,9 +137,10 @@ def main(args):
 
     print(f"[INFO] Sharding: num_shards={args.num_shards}, shard_id={args.shard_id}")
     print(f"[INFO] Loaded {len(all_data)} total examples, running {len(indexed)} on this shard.")
+    return indexed
 
-    os.makedirs(args.trace_dir, exist_ok=True)
 
+def _prepare_retriever(args) -> list[str]:
     retriever_sources = [s.strip() for s in args.retriever_sources.split(",")]
     print(f"[INFO] Pre-initializing retriever on {args.retriever_device}...")
     print(f"[INFO] Retriever sources: {retriever_sources}")
@@ -130,7 +150,11 @@ def main(args):
         index_path=args.retriever_index_path,
         sources=retriever_sources,
     )
+    return retriever_sources
 
+
+def _load_models(args):
+    """Load the policy model and both tokenizers for beam inference."""
     print(f"[INFO] pi_theta: {args.policy_model_path}")
     print(f"[INFO] mu_phi: {args.reward_model_path}")
     args.reward_model_url = _resolve_reward_model_url(args)
@@ -149,8 +173,11 @@ def main(args):
     )
     pi_theta_tokenizer = pi_theta.get_tokenizer()
     print(f"[INFO] prefix_caching: {args.enable_prefix_caching}")
+    return pi_theta, pi_theta_tokenizer, mu_phi_tokenizer
 
-    config = Config(
+
+def _build_config(args) -> Config:
+    return Config(
         theta_qual=args.theta_qual,
         theta_dep=args.theta_dep,
         K_max=args.K_max,
@@ -169,7 +196,12 @@ def main(args):
         retriever_use_all_steps=args.retriever_use_all_steps,
     )
 
-    uncompleted = deque(BeamTrace(j, d, pi_theta_tokenizer, config) for j, d in indexed)
+
+def _run_beam_search(
+    traces, pi_theta, mu_phi_tokenizer, config: Config, retriever_sources: list[str], args
+) -> list[BeamTrace]:
+    """Schedule reasoning, reward, and search stages until all traces finish."""
+    uncompleted = deque(traces)
     completed: list = []
     step = 0
 
@@ -232,6 +264,10 @@ def main(args):
                 f"{format_live_accuracy(completed)}"
             )
 
+    return completed
+
+
+def _save_results(completed: list[BeamTrace], args) -> None:
     config_name = args.config_name
     if args.num_shards > 1:
         base = config_name or "beam"
